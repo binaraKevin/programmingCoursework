@@ -1,0 +1,87 @@
+---
+title: "Question 4"
+output: html_notebook
+---
+
+```{r}
+#loading the necessary libraries
+library(dplyr)
+library(tidyr)
+```
+
+```{r}
+#load the main dataset
+df <- read.csv("cleaned_dataset.csv")
+```
+
+```{r}
+head(df)
+```
+
+
+```{r}
+#selecting the necessary columns for Q4
+q4 <- df %>% select(Year, Month, DayofMonth, DayOfWeek, CRSDepTime, CRSArrTime, FlightNum, TailNum, ArrDelay, Origin, Dest, Date_time)
+```
+
+```{r}
+#sorting the dataframe by tail number and date time, and set Date_time as the index
+q4 <- arrange(q4, TailNum, Date_time)
+```
+
+```{r}
+#having a look at the new Date_time Column
+head(q4)
+```
+
+```{r}
+#comparing the current delay with the next delay
+q4 <- q4 %>%
+  mutate(Next_delay = lead(ArrDelay))
+```
+
+```{r}
+#checking the new Next_delay column
+head(q4, 10)
+```
+
+```{r}
+#checking for null values
+sum(is.na(q4))
+```
+
+```{r}
+#dropping the remaining null values
+q4 <- q4[complete.cases(q4),]
+```
+
+```{r}
+#checking the number of rows of the dataframe
+dim(q4)
+```
+
+
+```{r}
+#encoding the arrival delay and next delay columns
+q4$HadCurrentDelay <- ifelse(q4$ArrDelay > 0, 1, 0)
+q4$HasNextDelay <- ifelse(q4$Next_delay > 0, 1, 0)
+```
+
+```{r}
+#having a look at the dataframe
+head(q4)
+```
+
+
+```{r}
+#creating the contingency table
+crosstab <- table(q4$HadCurrentDelay, q4$HasNextDelay) %>% 
+            prop.table(margin = 2) %>% 
+            as.data.frame() %>%
+            rename(HadCurrentDelay = Var1, HasNextDelay = Var2, Percentage = Freq)
+
+head(crosstab)
+```
+
+
+If a plane had an arrival delay at the current airport it is likely that plane will experience an arrival delay at the next airport as well.
