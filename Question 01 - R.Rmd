@@ -1,0 +1,192 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+#loading necessary libraries
+library(tidyverse)
+```
+
+```{r}
+#importing the cleaned dataset
+df <- read_csv("cleaned_dataset.csv")
+```
+
+```{r}
+#checking the number of rows and columns of the dataframe
+dim(df)
+```
+
+
+```{r}
+#Create a separate dataframe with only the necessary columns for the question
+q1 <- df %>%
+select(Year, Month, DayofMonth, DayOfWeek, CRSDepTime, ArrDelay, Time_bin)
+head(q1)
+```
+
+```{r}
+#calculating the average and standard deviation of delays for each time slot
+hourly_delays <- q1 %>%group_by(Time_bin) %>% 
+  summarize(Avg_delay = mean(ArrDelay),Standard_deviation = sd(ArrDelay))
+```
+
+```{r}
+#getting the max delays of the time slots within one standard deviation above the mean
+hourly_delays$Max_delay <- hourly_delays$Avg_delay + hourly_delays$Standard_deviation
+```
+
+```{r}
+#checking the hourly delays
+head(hourly_delays, 12)
+```
+
+```{r}
+# reordering the rows of hourly_delays dataframe
+hourly_delays <- hourly_delays[c(3, 5, 7, 9, 11, 1, 4, 6, 8, 10, 12, 2),]
+```
+
+
+```{r}
+#getting the number of flights in each 2 hour time slot
+table(q1$Time_bin)
+```
+
+#getting a colour-blind friendly, colour palette
+```{r}
+library("RColorBrewer") 
+display.brewer.all(colorblindFriendly = TRUE)
+```
+
+```{r}
+my_palette<-brewer.pal(n = 12, name = "Paired")
+```
+
+```{r}
+# plotting a barplot to visualise the average delay per 2 hour time slot
+ggplot(hourly_delays) +
+  geom_bar(aes(x = Time_bin, y = Avg_delay), stat = "identity", fill = my_palette[2]) +
+  labs(x = "Time slots", y = "Delay (in minutes)", title = "Average Delays per 2 hour time slot") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45))
+
+ggsave("Avg delay per 2 hours in R.png")
+```
+
+```{r}
+#plotting a barplot to visualise the maximum delay per 2 hour time slot, within one standard deviation above the mean
+ggplot(hourly_delays) +
+  geom_bar(aes(x = Time_bin, y = Max_delay), stat = "identity", fill = my_palette[2]) +
+  labs(x = "Time slots", y = "Delay (in minutes)", title = "Maximum Delays per 2 hour time slot, within 1 standard deviation above the mean") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45))
+
+ggsave("Max delay per 2 hours in R.png")
+```
+
+
+```{r}
+#Calculate the average and standard deviation of delays for each day of the week
+daily_delays <- q1 %>%
+  group_by(DayOfWeek) %>%
+  summarize(Avg_delay = mean(ArrDelay),
+  Standard_deviation = sd(ArrDelay),
+  Max_delay = mean(ArrDelay) + sd(ArrDelay))
+```
+
+```{r}
+#printing the daily delays
+daily_delays
+```
+
+```{r}
+#counting the number of flights on each day of the week
+q1 %>%
+count(DayOfWeek)
+```
+
+
+```{r}
+#plotting a barplot to visualize the average delay per day of the week
+ggplot(daily_delays, aes(x = factor(DayOfWeek), y = Avg_delay)) +
+geom_bar(stat = "identity", fill = my_palette[2]) +
+labs(x = "Day of the Week", y = "Delay (in minutes)", title = "Average Delay per Day of the Week") +
+theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+ggsave("Avg delay per day in R.png")
+```
+
+```{r}
+#plotting a barplot to visualize the maximum delay per day of the week within 1 standard deviation above the mean
+ggplot(daily_delays, aes(x = factor(DayOfWeek), y = Max_delay)) +
+geom_bar(stat = "identity", fill = my_palette[2]) +
+labs(x = "Day of the Week", y = "Delay (in minutes)", title = "Maximum Delay per Day of the Week within 1 Standard Deviation Above the Mean") +
+theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+ggsave("Max delay per day in R.png")
+```
+#Saturday is the day in which passengers are most likely to minimize their delays.
+
+
+```{r}
+#calculating the average and standard deviation of delays for each season
+monthly_delays <- q1 %>%
+  group_by(Month) %>%
+  summarise(Avg_delay = mean(ArrDelay, na.rm = TRUE),
+            Standard_deviation = sd(ArrDelay, na.rm = TRUE)) %>%
+  ungroup()
+```
+
+```{r}
+#getting the max delays of the time slots within one standard deviation above the mean
+monthly_delays$Max_delay <- monthly_delays$Avg_delay + monthly_delays$Standard_deviation
+```
+
+```{r}
+#checking the monthly delays
+head(monthly_delays, 12)
+```
+
+```{r}
+#getting the number of flights in each 2 hour time slot
+table(q1$Month)
+```
+
+```{r}
+#plotting a barplot to visualise the average delay per month of the year
+ggplot(monthly_delays, aes(x = Month, y = Avg_delay)) +
+  geom_bar(stat = "identity", fill = my_palette[2]) +
+  theme_minimal() +
+  labs(x = "Month of the year", y = "Delay (in minutes)", title = "Average delay per month of the year") +
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.text.x = element_text(angle = 45, hjust = 1),
+        axis.title = element_text(size = 15),
+        axis.text = element_text(size = 13),
+        panel.grid.major.y = element_line(color = "grey", linetype = "dashed"),
+        panel.grid.major = element_blank(),
+        panel.border = element_blank(),
+        panel.background = element_blank())
+
+ggsave("Avg delay per month in R.png")
+```
+
+```{r}
+#plotting a barplot to visualise the maximum delay per month of the year within 1 standard deviation above the mean
+ggplot(monthly_delays, aes(x = Month, y = Max_delay)) +
+  geom_bar(stat = "identity", fill = my_palette[2]) +
+  theme_minimal() +
+  labs(x = "Month of the year", y = "Delay (in minutes)", title = "Maximum delay per month of the year within 1 standard deviation above the mean") +
+  theme(plot.title = element_text(size = 12, hjust = 0.5),
+        axis.text.x = element_text(angle = 45, hjust = 1),
+        axis.title = element_text(size = 14),
+        axis.text = element_text(size = 12),
+        panel.grid.major.y = element_line(color = "grey", linetype = "dashed"),
+        panel.grid.major = element_blank(),
+        panel.border = element_blank(),
+        panel.background = element_blank())
+
+ggsave("Max delay per month in R.png")
+```
+
+# November is the month in which passengers are most likely to minimize their delays.
