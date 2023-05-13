@@ -1,0 +1,116 @@
+---
+title: "Question 02"
+output: html_notebook
+---
+
+```{r}
+#importing the required libraries
+library(tidyverse)
+```
+
+```{r}
+#reading the data from CSV
+df <- read_csv("cleaned_dataset.csv")
+```
+
+```{r}
+head(df)
+```
+
+
+```{r}
+#keeping the necessary columns
+q2 <- df[, c(15, 29)]
+```
+
+```{r}
+#checking the number of planes in each age
+table(q2$Age)
+```
+
+```{r}
+
+```
+
+
+```{r}
+#getting the average delay of planes, for each year of age of the planes
+grouped_delay <- q2 %>% group_by(Age) %>%
+  summarise(Avg_delay = mean(ArrDelay, na.rm = TRUE),
+            Standard_deviation = sd(ArrDelay, na.rm = TRUE)) %>%
+  ungroup()
+```
+
+```{r}
+#Getting the max delays of each year of age of the planes, within one standard deviation above the mean
+grouped_delay$Max_delay <- (grouped_delay$Avg_delay + grouped_delay$Standard_deviation)
+```
+
+```{r}
+#checking the grouped delays
+head(grouped_delay, 50)
+```
+
+#getting a colour-blind friendly colour palette
+```{r}
+library(RColorBrewer)
+display.brewer.all(colorblindFriendly = TRUE)
+```
+
+```{r}
+my_palette<-brewer.pal(n = 12, name = "Paired")
+```
+
+
+```{r}
+library(ggplot2)
+
+ggplot(grouped_delay, aes(x=Age, y=Avg_delay)) +
+  geom_point(color = my_palette[2]) +
+  geom_smooth(method='lm', se=FALSE, color = my_palette[4]) +
+  scale_x_continuous(name="Age", breaks=seq(0, max(grouped_delay$Age), by=5)) +
+  scale_y_continuous(name="Arrival Delay") +
+  ggtitle("Average delay according to age") +
+  theme(plot.title = element_text(size=14),
+  axis.text.x=element_text(size=13),
+  axis.text.y=element_text(size=13))
+
+ggsave("Average delays according to planes' age.png")
+```
+
+```{r}
+ggplot(grouped_delay, aes(x=Age, y=Max_delay)) +
+  geom_point(color = my_palette[2]) +
+  geom_smooth(method='lm', se=FALSE, color = my_palette[4]) +
+  scale_x_continuous(name="Age", breaks=seq(0, max(grouped_delay$Age), by=5)) +
+  scale_y_continuous(name="Arrival Delay") +
+  ggtitle("Maximum delay within 1 standard deviation above the mean, according to age") +
+  scale_color_brewer(palette = "Paired") +
+  theme(plot.title = element_text(size=14),
+  axis.text.x=element_text(size=13),
+  axis.text.y=element_text(size=13))
+
+ggsave("Maximum delays according to planes' age.png")
+```
+
+```{r}
+# average delay for old planes
+mean(q2$ArrDelay[q2$Age >= 25], na.rm = TRUE)
+```
+
+```{r}
+# average delay for new planes
+mean(q2$ArrDelay[q2$Age < 25], na.rm = TRUE)
+```
+
+```{r}
+#maximum delay within 1 standard deviation above the mean for old planes
+max_delay_old <- mean(df$ArrDelay[df$Age>=25]) + sd(df$ArrDelay[df$Age>=25])
+print(max_delay_old)
+```
+
+```{r}
+#maximum delay within 1 standard deviation above the mean for old planes
+max_delay_new <- mean(df$ArrDelay[df$Age<25]) + sd(df$ArrDelay[df$Age<25])
+print(max_delay_new)
+```
